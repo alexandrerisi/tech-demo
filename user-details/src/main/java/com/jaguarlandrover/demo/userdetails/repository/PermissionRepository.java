@@ -1,0 +1,9 @@
+package com.jaguarlandrover.demo.userdetails.repository;
+
+import com.jaguarlandrover.demo.userdetails.domain.Permission;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Mono;
+
+public interface PermissionRepository extends ReactiveCrudRepository<Permission, String> {
+    Mono<Long> deleteByDescription(String permission);
+}
