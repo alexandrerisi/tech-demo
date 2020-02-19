@@ -18,28 +18,28 @@ public class CarMappingController {
 
     private final CarMappingService service;
 
-    @PostMapping("/telematics")
+    @PostMapping("${ep.carmapping.telematics-ingest}")
     public void ingestTelematicsData(@RequestBody @Valid TelematicsMessage data) {
         service.publishDataForIp(data);
     }
 
-    @PostMapping("/commands")
+    @PostMapping("${ep.carmapping.commands-ingest}")
     public void ingestCommand(@RequestBody CommandMessage command) {
         service.publishDataForIp(command);
     }
 
-    @GetMapping("/mappings")
+    @GetMapping("${ep.carmapping.mappings.all}")
     public Flux<CarMapping> retrieveAllMappings() {
         return service.retrieveAllIpMappings();
     }
 
-    @PostMapping("/mappings")
+    @PostMapping("${ep.carmapping.mappings.create}")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<CarMapping> createMapping(@RequestBody CarMapping mapping) {
         return service.createMapping(mapping);
     }
 
-    @DeleteMapping("/mappings/{ip}")
+    @DeleteMapping("${ep.carmapping.mappings.remove}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteIpMapping(@PathVariable String ip) {
         return service.deleteMapping(ip);

@@ -1,5 +1,6 @@
 package com.jaguarlandrover.demo.gateway.service;
 
+import com.jaguarlandrover.demo.gateway.configuration.endpoints.*;
 import com.jaguarlandrover.demo.gateway.domain.JlrUser;
 import com.jaguarlandrover.demo.gateway.domain.json.JlrUserJson;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,12 @@ public class GatewayService {
     private final WebClient.Builder lbWebClient;
     private final JwtService jwtService;
     private Logger logger = Logger.getLogger(this.getClass().getName());
+    private final TelematicsEndpoints telematicsEndpoints;
+    private final CommandsEndpoints commandsEndpoints;
+    private final UserEndpoints userEndpoints;
+    private final RoutingEndpoints routingEndpoints;
+    private final BillingEndpoints billingEndpoints;
+    private final CarmappingEndpoints carmappingEndpoints;
 
     @PreAuthorize("hasAuthority('TELEMATICS')")
     public Flux generateTelematicsStream(String vin) {
@@ -36,11 +43,9 @@ public class GatewayService {
     }
 
     private Flux generateStream(String vin, boolean isTelematics) {
-        var serviceName = isTelematics ? "telematics" : "command";
+        var endpoint = isTelematics ? telematicsEndpoints.getStream() : commandsEndpoints.getStream();
         return lbWebClient.build().get()
-                .uri("http://" + serviceName + "-service/"
-                        + (isTelematics ? "telematics" : "commands") + "/stream/"
-                        + vin)
+                .uri(endpoint, vin)
                 .retrieve()
                 .bodyToFlux(Object.class)
                 .doOnSubscribe(subscription -> realtimeTrigger(vin, isTelematics, true))
@@ -59,9 +64,9 @@ public class GatewayService {
     }
 
     private Mono retrieveLatestDataForVin(String vin, boolean isTelematics) {
-        var serviceName = isTelematics ? "telematics" : "command";
+        var endpoint = isTelematics ? telematicsEndpoints.getTelematics() : commandsEndpoints.getCommands();
         return lbWebClient.build().get()
-                .uri("http://" + serviceName + "-service/" + (isTelematics ? "telematics" : "commands") + "/" + vin)
+                .uri(endpoint, vin)
                 .retrieve()
                 .bodyToMono(Object.class)
                 .doOnSubscribe(subscription -> realtimeTrigger(vin, isTelematics, true))
@@ -73,11 +78,12 @@ public class GatewayService {
 
     private void realtimeTrigger(String vin, boolean isTelematics, boolean isActivation) {
         var action = isActivation ? "Adding subscription for " : "Subtracting subscription for ";
-        var service = isTelematics ? "telematics/" : "commands/";
-        logger.info(action + service + " for " + vin);
+        var endpoint = isTelematics ? routingEndpoints.getRealtimeTelematicsActivate()
+                : routingEndpoints.getRealtimeCommandsActivate();
+        logger.info(action + vin + " " + endpoint);
         lbWebClient.build()
                 .method(isActivation ? HttpMethod.POST : HttpMethod.DELETE)
-                .uri("http://routing-service/realtime/" + service + vin)
+                .uri(endpoint, vin)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .subscribe();
@@ -88,7 +94,7 @@ public class GatewayService {
         logger.info("Retrieving bills...");
         return lbWebClient.build()
                 .get()
-                .uri("http://billing-service/bills")
+                .uri(billingEndpoints.getBills())
                 .retrieve()
                 .bodyToFlux(Object.class);
     }
@@ -99,7 +105,7 @@ public class GatewayService {
         logger.info("Requesting user creation...");
         return lbWebClient.build()
                 .post()
-                .uri("http://user-details/users")
+                .uri(userEndpoints.getCreate())
                 .body(Mono.just(user), Object.class)
                 .retrieve()
                 .bodyToMono(Object.class);
@@ -109,7 +115,7 @@ public class GatewayService {
         logger.info("Retrieving realtime activations...");
         return lbWebClient.build()
                 .get()
-                .uri("http://routing-service/realtime/all")
+                .uri(routingEndpoints.getRealtimeActivations())
                 .retrieve()
                 .bodyToFlux(Object.class);
     }
@@ -118,7 +124,7 @@ public class GatewayService {
         logger.info("Requesting user -> " + username + "/" + password);
         return lbWebClient.build()
                 .get()
-                .uri("http://user-details/users/" + username + "/" + password)
+                .uri(userEndpoints.getLogin(), username, password)
                 .retrieve()
                 .bodyToMono(JlrUserJson.class)
                 .map(userJson -> jwtService.generateToken(JlrUser.jsonToUser(userJson)));
@@ -128,7 +134,7 @@ public class GatewayService {
     public Mono addCarMapping(Object mapping) {
         logger.info("Adding Mapping to Vin/IP");
         return lbWebClient.build()
-                .post().uri("http://carmapping-service/mappings")
+                .post().uri(carmappingEndpoints.getMappingsCreate())
                 .body(Mono.just(mapping), Object.class)
                 .retrieve()
                 .bodyToMono(Object.class);

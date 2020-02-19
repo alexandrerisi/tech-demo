@@ -1,11 +1,9 @@
 package com.jaguarlandrover.demo.gateway.aspect;
 
 import com.jaguarlandrover.demo.gateway.exception.InsufficientVinPermissionException;
-import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,12 +11,16 @@ import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
-@RequiredArgsConstructor
 @Order(2)
 public class GatewayAspect {
 
     @Pointcut("execution(* com.jaguarlandrover.demo.gateway.service.GatewayService.generate*Stream(..))")
-    private void checkVinPermission(){}
+    private void checkVinPermission() {
+    }
+
+    @Pointcut("execution(* com.jaguarlandrover.demo.gateway.configuration.endpoints.*Endpoints.get*())")
+    private void createUrlForEndpoints() {
+    }
 
     @Before("checkVinPermission()")
     public void beforeStream(JoinPoint joinPoint) {
@@ -28,6 +30,16 @@ public class GatewayAspect {
                 throw new InsufficientVinPermissionException("You don't have permission on this VIN.");
             break;
         }
+    }
+
+    @Around("createUrlForEndpoints()")
+    public String afterGetEndpoint(ProceedingJoinPoint proceedingJoinPoint) {
+        try {
+            return "http://" + proceedingJoinPoint.proceed();
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+        return null;
     }
 
     private boolean hasVinPermission(String vin) {

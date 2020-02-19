@@ -15,24 +15,24 @@ public class DataLakeController {
 
     private final DataLakeService service;
 
-    @PostMapping("/telematics")
+    @PostMapping("${ep.datalake.telematics-ingest}")
     @ResponseStatus(HttpStatus.CREATED)
     public void ingestTelematics(@RequestBody TelematicsData data) {
         service.ingestTelematics(data);
     }
 
-    @PostMapping("/commands")
+    @PostMapping("${ep.datalake.commands-ingest}")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<CommandData> ingestTelematics(@RequestBody CommandData data) {
         return service.ingestCommand(data);
     }
 
-    @GetMapping("/telematics")
+    @GetMapping("${ep.datalake.telematics-all}")
     public Flux<TelematicsData> retrieveAllTelematics() {
         return service.retrieveAllTelematics();
     }
 
-    @GetMapping("/commands")
+    @GetMapping("${ep.datalake.commands-all}")
     public Flux<CommandData> retrieveAllCommands() {
         return service.retrieveAllCommands();
     }

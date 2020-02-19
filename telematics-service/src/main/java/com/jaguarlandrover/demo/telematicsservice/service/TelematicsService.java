@@ -53,10 +53,10 @@ public class TelematicsService {
     public Flux<TelematicsData> generateStreamForVin(String vin) {
         var sub = new Subscription[1];
         var counter = new int[1];
-        return Flux.interval(Duration.ofSeconds(1))
+        return Flux.interval(Duration.ofSeconds(5))
                 .log()
                 .doOnSubscribe(subscription -> sub[0] = subscription)
-                .flatMap(aLong -> repository.getLatestTelematicsData(vin, LocalDateTime.now().minusSeconds(1))
+                .flatMap(aLong -> repository.getLatestTelematicsData(vin, LocalDateTime.now().minusSeconds(5))
                         .switchIfEmpty(Mono.fromRunnable(() -> {
                             ++counter[0];
                             if (counter[0] == 30)

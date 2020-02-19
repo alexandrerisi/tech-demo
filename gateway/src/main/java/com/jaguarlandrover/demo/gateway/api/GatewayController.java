@@ -15,7 +15,7 @@ public class GatewayController {
 
     private final GatewayService gatewayService;
 
-    @GetMapping("/login/{username}/{password}")
+    @GetMapping("${ep.gateway.login}")
     public Mono<String> login(@PathVariable String username, @PathVariable String password) {
         return gatewayService.generateJwtToken(username, password);
     }
@@ -26,42 +26,42 @@ public class GatewayController {
         return Mono.just("Works");
     }
 
-    @GetMapping(value = "/telematics/stream/{vin}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "${ep.gateway.telematics-stream}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux streamTelematics(@PathVariable String vin) {
         return gatewayService.generateTelematicsStream(vin);
     }
 
-    @GetMapping(value = "/commands/stream/{vin}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "${ep.gateway.commands-stream}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux streamCommands(@PathVariable String vin) {
         return gatewayService.generateCommandsStream(vin);
     }
 
-    @GetMapping("/telematics/{vin}")
+    @GetMapping("${ep.gateway.telematics}")
     public Mono latestTelematicsForVin(@PathVariable String vin) {
         return gatewayService.retrieveLatestTelematicsForVin(vin);
     }
 
-    @GetMapping("/commands/{vin}")
+    @GetMapping("${ep.gateway.commands}")
     public Mono latestCommandsForVin(@PathVariable String vin) {
         return gatewayService.retrieveLatestCommandsForVin(vin);
     }
 
-    @GetMapping("/bills")
+    @GetMapping("${ep.gateway.bills}")
     public Flux retrieveAllBills() {
         return gatewayService.retrieveAllBills();
     }
 
-    @PostMapping("/users")
+    @PostMapping("${ep.gateway.users}")
     public Mono createUser(@RequestBody Object user) {
         return gatewayService.createUser(user);
     }
 
-    @GetMapping("/activations")
+    @GetMapping("${ep.gateway.activations}")
     public Flux retrieveActivations() {
         return gatewayService.retrieveActivations();
     }
 
-    @PostMapping("/mappings")
+    @PostMapping("${ep.gateway.mappings}")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono addCarMapping(@RequestBody Object mapping) {
         return gatewayService.addCarMapping(mapping);

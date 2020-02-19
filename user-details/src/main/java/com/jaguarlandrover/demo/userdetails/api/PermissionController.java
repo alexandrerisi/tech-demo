@@ -10,23 +10,22 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/permissions")
 public class PermissionController {
 
     private final PermissionService service;
 
-    @PostMapping("/{permission}")
+    @PostMapping("${ep.user-service.permissions.create}")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<Permission> createPermission(@PathVariable String permission) {
         return service.createPermission(permission);
     }
 
-    @GetMapping("/all")
+    @GetMapping("${ep.user-service.permissions.all}")
     public Flux<Permission> retrievePermissions() {
         return service.retrievePermissions();
     }
 
-    @DeleteMapping("/{permission}")
+    @DeleteMapping("${ep.user-service.permissions.remove}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Long> deletePermission(@PathVariable String permission){
         return service.removePermission(permission);

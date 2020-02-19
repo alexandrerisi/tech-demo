@@ -11,23 +11,22 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users")
 public class UserController {
 
     private final UserService service;
 
-    @GetMapping("/{username}/{password}")
+    @GetMapping("${ep.user-service.login}")
     public Mono<UserJson> retrieveUser(@PathVariable String username, @PathVariable String password) {
         var user = new User(null, username, password, null);
         return service.retrieveUser(user).map(UserJson::userToJson);
     }
 
-    @GetMapping("/all")
+    @GetMapping("${ep.user-service.all}")
     public Flux<User> retrieveUsers() {
         return service.retrieveUsers();
     }
 
-    @PostMapping
+    @PostMapping("${ep.user-service.create}")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<User> createUser(@RequestBody User user){
         return service.createUser(user);
