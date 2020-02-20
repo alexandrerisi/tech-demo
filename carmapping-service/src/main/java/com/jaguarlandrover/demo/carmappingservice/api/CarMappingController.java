@@ -28,18 +28,18 @@ public class CarMappingController {
         service.publishDataForIp(command);
     }
 
-    @GetMapping("${ep.carmapping.mappings.all}")
+    @GetMapping("${ep.carmapping.mappings-all}")
     public Flux<CarMapping> retrieveAllMappings() {
         return service.retrieveAllIpMappings();
     }
 
-    @PostMapping("${ep.carmapping.mappings.create}")
+    @PostMapping("${ep.carmapping.mappings-create}")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<CarMapping> createMapping(@RequestBody CarMapping mapping) {
         return service.createMapping(mapping);
     }
 
-    @DeleteMapping("${ep.carmapping.mappings.remove}")
+    @DeleteMapping("${ep.carmapping.mappings-remove}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteIpMapping(@PathVariable String ip) {
         return service.deleteMapping(ip);

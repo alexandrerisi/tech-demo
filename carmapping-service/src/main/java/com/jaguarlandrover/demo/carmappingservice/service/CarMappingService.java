@@ -1,5 +1,7 @@
 package com.jaguarlandrover.demo.carmappingservice.service;
 
+import com.jaguarlandrover.demo.carmappingservice.config.endpoints.DatalakeEndpoints;
+import com.jaguarlandrover.demo.carmappingservice.config.endpoints.RoutingEndpoints;
 import com.jaguarlandrover.demo.carmappingservice.domain.CarMapping;
 import com.jaguarlandrover.demo.carmappingservice.domain.CommandMessage;
 import com.jaguarlandrover.demo.carmappingservice.domain.MessageIdentifier;
@@ -24,6 +26,8 @@ public class CarMappingService {
     private final WebClient.Builder lbWebClient;
     private final ReactiveCircuitBreakerFactory cbFactory;
     private Logger logger = Logger.getLogger(this.getClass().getName());
+    private final DatalakeEndpoints datalakeEndpoints;
+    private final RoutingEndpoints routingEndpoints;
 
     public Flux<CarMapping> retrieveAllIpMappings() {
         return repository.findAll();
@@ -48,10 +52,11 @@ public class CarMappingService {
     }
 
     private void publishData(MessageIdentifier message) {
-        var serviceName = message instanceof TelematicsMessage ? "telematics" : "commands";
-        List<String> uris = List.of(
-                "http://data-lake/" + serviceName,
-                "http://routing-service/ingest/" + serviceName + "/" + message.getIdentifier());
+        var datalakeEndpoint = message instanceof TelematicsMessage ?
+                datalakeEndpoints.getTelematicsIngest() : datalakeEndpoints.getCommandsIngest();
+        var routingEndpoint = message instanceof TelematicsMessage ?
+                routingEndpoints.getPublishTelematics() : routingEndpoints.getPublishCommands();
+        List<String> uris = List.of(datalakeEndpoint, routingEndpoint.replace("{vin}", message.getIdentifier()));
         uris.forEach(uri -> lbWebClient.build()
                 .post()
                 .uri(uri)
