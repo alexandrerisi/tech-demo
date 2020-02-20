@@ -1,4 +1,4 @@
-package com.jaguarlandrover.demo.carmappingservice.aspect;
+package com.jaguarlandrover.demo.routingservice.aspect;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -9,13 +9,14 @@ import org.springframework.stereotype.Component;
 
 @Aspect
 @Component
-public class CarmappingAspect {
+public class RoutingAspect {
 
     @Value("${protocol}")
     private String protocol;
 
-    @Pointcut("execution(* com.jaguarlandrover.demo.carmappingservice.config.endpoints.*Endpoints.get*())")
-    private void createUrlForEndpoints() {}
+    @Pointcut("execution(* com.jaguarlandrover.demo.routingservice.configuration.endpoints.*Endpoints.get*())")
+    private void createUrlForEndpoints() {
+    }
 
     @Around("createUrlForEndpoints()")
     public String afterGetEndpoint(ProceedingJoinPoint proceedingJoinPoint) {

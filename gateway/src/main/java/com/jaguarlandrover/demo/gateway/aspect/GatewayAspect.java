@@ -4,6 +4,7 @@ import com.jaguarlandrover.demo.gateway.exception.InsufficientVinPermissionExcep
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +14,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(2)
 public class GatewayAspect {
+
+    @Value("${protocol}")
+    private String protocol;
 
     @Pointcut("execution(* com.jaguarlandrover.demo.gateway.service.GatewayService.generate*Stream(..))")
     private void checkVinPermission() {
@@ -35,7 +39,7 @@ public class GatewayAspect {
     @Around("createUrlForEndpoints()")
     public String afterGetEndpoint(ProceedingJoinPoint proceedingJoinPoint) {
         try {
-            return "http://" + proceedingJoinPoint.proceed();
+            return protocol + proceedingJoinPoint.proceed();
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

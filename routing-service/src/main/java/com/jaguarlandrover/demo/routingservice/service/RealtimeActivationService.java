@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
-public class RealtimeService {
+public class RealtimeActivationService {
 
     private final CacheService cacheService;
     private final ActivationRepository repository;

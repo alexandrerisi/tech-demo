@@ -7,6 +7,7 @@ import com.jaguarlandrover.demo.gateway.domain.TelematicsDecoder;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -21,6 +22,7 @@ import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class GatewayApplication {
 
     public static void main(String[] args) {

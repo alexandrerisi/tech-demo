@@ -3,9 +3,7 @@ package com.jaguarlandrover.demo.gateway.configuration.endpoints;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
 @ConfigurationProperties(prefix = "ep.carmapping")
 @Getter
 @RequiredArgsConstructor
