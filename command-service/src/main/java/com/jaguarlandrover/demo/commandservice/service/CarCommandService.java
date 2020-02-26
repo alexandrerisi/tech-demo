@@ -1,5 +1,7 @@
 package com.jaguarlandrover.demo.commandservice.service;
 
+import com.jaguarlandrover.demo.commandservice.configuration.CostConfig;
+import com.jaguarlandrover.demo.commandservice.configuration.endpoints.BillingEndpoints;
 import com.jaguarlandrover.demo.commandservice.domain.CarData;
 import com.jaguarlandrover.demo.commandservice.domain.CommandData;
 import com.jaguarlandrover.demo.commandservice.domain.CommandIngestion;
@@ -7,6 +9,7 @@ import com.jaguarlandrover.demo.commandservice.repository.CarCommandRepository;
 import com.mongodb.client.result.UpdateResult;
 import lombok.RequiredArgsConstructor;
 import org.reactivestreams.Subscription;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -20,8 +23,14 @@ import java.util.logging.Logger;
 @RequiredArgsConstructor
 public class CarCommandService {
 
+    @Value("${commands.search-period}")
+    private int searchPeriod;
+    @Value("${stream.termination.attempts}")
+    private int streamTerminationAttempts;
     private final CarCommandRepository repository;
     private final WebClient.Builder lbWebClient;
+    private final BillingEndpoints billingEndpoints;
+    private final CostConfig costConfig;
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
     public Mono<UpdateResult> dataIngest(CommandIngestion data) {
@@ -43,26 +52,26 @@ public class CarCommandService {
         return repository.getLatestCommandData(vin, LocalDateTime.now().minusSeconds(5))
                 .doOnNext(commandData -> {
                     if (commandData != null && !commandData.getCommand().isBlank())
-                        addBillToVin(vin, 0.03);
+                        addBillToVin(vin, costConfig.getSingleRequest());
                 });
     }
 
     public Flux<CommandData> generateStreamForVin(String vin) {
         var sub = new Subscription[1];
         var counter = new int[1];
-        return Flux.interval(Duration.ofSeconds(5))
+        return Flux.interval(Duration.ofSeconds(searchPeriod))
                 .log()
                 .doOnSubscribe(subscription -> sub[0] = subscription)
-                .flatMap(aLong -> repository.getLatestCommandData(vin, LocalDateTime.now().minusSeconds(5))
+                .flatMap(aLong -> repository.getLatestCommandData(vin, LocalDateTime.now().minusSeconds(searchPeriod))
                         .switchIfEmpty(Mono.fromRunnable(() -> {
                             ++counter[0];
-                            if (counter[0] == 100)
+                            if (counter[0] == streamTerminationAttempts)
                                 sub[0].cancel();
                         })))
                 .doOnNext(telematicsData -> {
                     if (telematicsData != null) {
                         counter[0] = 0;
-                        addBillToVin(vin, 0.02);
+                        addBillToVin(vin, costConfig.getStreamMessage());
                     }
                 });
     }
@@ -70,7 +79,7 @@ public class CarCommandService {
     private void addBillToVin(String vin, double amount) {
         lbWebClient.build()
                 .put()
-                .uri("http://billing-service/" + vin + "/" + amount)
+                .uri(billingEndpoints.getAdd(), vin, amount)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .subscribe();

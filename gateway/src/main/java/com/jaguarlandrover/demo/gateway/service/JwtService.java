@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClock;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +19,8 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    //private static final long serialVersionUID = 1L;
+    @Value("${token.expiration}")
+    private int tokenExpiration;
     private Clock clock = DefaultClock.INSTANCE;
 
     private Key secret = Keys.secretKeyFor(SignatureAlgorithm.HS256);
@@ -50,7 +52,7 @@ public class JwtService {
     }
 
     private Date calculateExpirationDate(Date createdDate) {
-        return new Date(createdDate.getTime() + 604800 * 1000);
+        return new Date(createdDate.getTime() + tokenExpiration);
     }
 
     private boolean isTokenExpired(String token) {
@@ -66,10 +68,11 @@ public class JwtService {
     }
 
     private String doGenerateToken(Map<String, Object> claims, String username) {
-        var expirationTimeLong = new Date().getTime() + 604800; //in second
+        var currentDate = new Date();
+        var expirationTimeLong = currentDate.getTime() + tokenExpiration;
 
-        final Date createdDate = new Date();
-        final Date expirationDate = new Date(createdDate.getTime() + expirationTimeLong);
+        final var createdDate = new Date();
+        final Date expirationDate = new Date(currentDate.getTime() + expirationTimeLong);
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(username)

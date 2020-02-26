@@ -1,5 +1,7 @@
 package com.jaguarlandrover.demo.telematicsservice.service;
 
+import com.jaguarlandrover.demo.telematicsservice.configuration.CostConfiguration;
+import com.jaguarlandrover.demo.telematicsservice.configuration.endpoints.BillingEndpoints;
 import com.jaguarlandrover.demo.telematicsservice.domain.CarData;
 import com.jaguarlandrover.demo.telematicsservice.domain.TelematicsData;
 import com.jaguarlandrover.demo.telematicsservice.domain.TelematicsIngestion;
@@ -7,6 +9,7 @@ import com.jaguarlandrover.demo.telematicsservice.repository.CarTelematicsReposi
 import com.mongodb.client.result.UpdateResult;
 import lombok.RequiredArgsConstructor;
 import org.reactivestreams.Subscription;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -20,8 +23,14 @@ import java.util.logging.Logger;
 @RequiredArgsConstructor
 public class TelematicsService {
 
+    @Value("${stream.termination.attempts}")
+    private int streamTerminationAttempts;
+    @Value("${telematics.search-period}")
+    private int telematicsSearchPeriod;
     private final CarTelematicsRepository repository;
     private final WebClient.Builder lbWebClient;
+    private final BillingEndpoints billingEndpoints;
+    private final CostConfiguration costConfiguration;
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
     public Mono<UpdateResult> dataIngestion(TelematicsIngestion json) {
@@ -40,12 +49,12 @@ public class TelematicsService {
     }
 
     public Mono<TelematicsData> retrieveLatestTelematicsForVin(String vin) {
-        return repository.getLatestTelematicsData(vin, LocalDateTime.now().minusSeconds(5))
+        return repository.getLatestTelematicsData(vin, LocalDateTime.now().minusSeconds(telematicsSearchPeriod))
                 .doOnNext(telematicsData -> {
                     if (telematicsData != null)
-                        addBillToVin(vin, 0.03);
+                        addBillToVin(vin, costConfiguration.getSingleRequest());
                     else
-                        addBillToVin(vin, 0.01);
+                        addBillToVin(vin, costConfiguration.getSingleRequestFail());
                 });
     }
 
@@ -59,13 +68,13 @@ public class TelematicsService {
                 .flatMap(aLong -> repository.getLatestTelematicsData(vin, LocalDateTime.now().minusSeconds(5))
                         .switchIfEmpty(Mono.fromRunnable(() -> {
                             ++counter[0];
-                            if (counter[0] == 30)
+                            if (counter[0] == streamTerminationAttempts)
                                 sub[0].cancel();
                         })))
                 .doOnNext(telematicsData -> {
                     if (telematicsData != null) {
                         counter[0] = 0;
-                        addBillToVin(vin, 0.02);
+                        addBillToVin(vin, costConfiguration.getStreamMessage());
                     }
                 });
     }
@@ -73,7 +82,7 @@ public class TelematicsService {
     private void addBillToVin(String vin, double amount) {
         lbWebClient.build()
                 .put()
-                .uri("http://billing-service/" + vin + "/" + amount)
+                .uri(billingEndpoints.getAdd(), vin, amount)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .subscribe();
