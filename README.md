@@ -1,4 +1,4 @@
-The tech demo was presented in Jaguar Land Rover with the purpose of demostrating the capabilities of Spring Cloud and reactive programming.
+The tech demo demostrates the capabilities of Spring Cloud and reactive programming.
 
 
 Technologies
