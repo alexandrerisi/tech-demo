@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.jaguarlandrover.demo</groupId>
+		<groupId>com.risi.demo</groupId>
 		<artifactId>tech-demo</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
