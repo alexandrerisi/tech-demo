@@ -1,0 +1,6 @@
+com\jaguarlandrover\demo\realtimeactivator\domain\Vin.class
+com\jaguarlandrover\demo\realtimeactivator\service\RealtimeService.class
+com\jaguarlandrover\demo\realtimeactivator\api\RealtimeController.class
+com\jaguarlandrover\demo\realtimeactivator\RealtimeActivatorApplication.class
+com\jaguarlandrover\demo\realtimeactivator\repository\CommandsVinRepository.class
+com\jaguarlandrover\demo\realtimeactivator\repository\TelematicsVinRepository.class
